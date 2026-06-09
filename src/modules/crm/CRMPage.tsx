@@ -84,7 +84,12 @@ function CardLead({ lead, qtdOrcamentos, onClick }: { lead: Lead; qtdOrcamentos:
 }
 
 export function CRMPage() {
-  const { leads, orcamentos, leadsCarregados, adicionarLead, atualizarStatusLeadRemoto, adicionarOrcamento, atualizarStatusOrcamento } = useDataStore()
+  const {
+    leads, orcamentos, leadsCarregados,
+    adicionarLead, atualizarStatusLeadRemoto,
+    adicionarOrcamento, atualizarStatusOrcamento,
+    adicionarPedido, adicionarOrdem,
+  } = useDataStore()
   const [leadSelecionado, setLeadSelecionado] = useState<Lead | null>(null)
   const [novoLeadOpen, setNovoLeadOpen] = useState(false)
 
@@ -116,8 +121,58 @@ export function CRMPage() {
   }
 
   function converterPedido(orc: Orcamento) {
+    const agora = new Date()
+    const numeroSequencial = Date.now().toString().slice(-4)
+    const numeroPedido = `PED-${agora.getFullYear()}-${numeroSequencial}`
+    const numeroOrdem = `OP-${agora.getFullYear()}-${numeroSequencial}`
+
+    const pedido = {
+      id: `ped-${Date.now()}`,
+      numeroPedido,
+      leadId: orc.leadId,
+      leadNome: orc.leadNome,
+      telefone: leads.find(l => l.id === orc.leadId)?.telefone ?? '',
+      orcamentoId: orc.id,
+      descricaoProduto: `${orc.tipoProduto} ${orc.cor ?? ''} ${orc.largura}×${orc.altura}m`.trim(),
+      tipoProduto: orc.tipoProduto,
+      largura: orc.largura,
+      altura: orc.altura,
+      tecido: orc.tecido,
+      cor: orc.cor,
+      modelo: orc.modelo,
+      valorTotal: orc.valorFinal,
+      valorSinal: Math.round(orc.valorFinal * 0.5 * 100) / 100,
+      formaSinal: 'pix',
+      valorRestante: Math.round(orc.valorFinal * 0.5 * 100) / 100,
+      status: 'aguardando_producao' as const,
+      criadoEm: agora,
+      atualizadoEm: agora,
+    }
+
+    const ordem = {
+      id: `ord-${Date.now()}`,
+      pedidoId: pedido.id,
+      numeroPedido,
+      clienteNome: orc.leadNome,
+      descricao: pedido.descricaoProduto,
+      tipoProduto: orc.tipoProduto,
+      largura: orc.largura,
+      altura: orc.altura,
+      tecido: orc.tecido,
+      cor: orc.cor,
+      modelo: orc.modelo,
+      quantidade: 1,
+      prazoProducao: new Date(agora.getTime() + (orc.prazoEntrega ?? 7) * 86400000),
+      status: 'pendente' as const,
+      materialEmEstoque: false,
+      precisaComprar: true,
+      criadoEm: agora,
+    }
+
+    adicionarPedido(pedido)
+    adicionarOrdem(ordem)
     moverLead(orc.leadId, 'convertido')
-    alert(`Pedido criado para ${orc.leadNome}!\n\nEm breve: integração automática com a aba Pedidos.`)
+    atualizarStatusOrcamento(orc.id, 'aprovado')
   }
 
   function orcamentosDoLead(leadId: string) {

@@ -136,10 +136,58 @@ function abrirJanela(html: string) {
   setTimeout(() => w.print(), 400)
 }
 
+interface Distribuicao {
+  valor: number
+  tipo: 'entrada' | 'saldo'
+}
+
+function ModalDistribuicao({ dist, onClose }: { dist: Distribuicao; onClose: () => void }) {
+  const { valor } = dist
+  const pct = (p: number) => Math.round(valor * p * 100) / 100
+  const fatias = [
+    { label: 'Material (compra de insumos)', pct: '30%', valor: pct(0.3), cor: 'bg-blue-50 border-blue-200 text-blue-700' },
+    { label: 'Despesas da empresa', pct: '30%', valor: pct(0.3), cor: 'bg-purple-50 border-purple-200 text-purple-700' },
+    { label: 'Pró-labore dos sócios', pct: '30%', valor: pct(0.3), cor: 'bg-green-50 border-green-200 text-green-700' },
+    { label: 'Reserva de impostos', pct: '6%', valor: pct(0.06), cor: 'bg-amber-50 border-amber-200 text-amber-700' },
+    { label: 'Caixa de segurança', pct: '4%', valor: pct(0.04), cor: 'bg-gray-50 border-gray-200 text-gray-600' },
+  ]
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
+      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
+        <div className="px-6 pt-5 pb-2">
+          <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Pagamento confirmado</p>
+          <p className="text-2xl font-bold text-gray-900">{formatMoeda(valor)}</p>
+          <p className="text-xs text-gray-500 mt-1">Como distribuir esse valor:</p>
+        </div>
+        <div className="px-4 pb-2 space-y-2">
+          {fatias.map(f => (
+            <div key={f.label} className={`flex items-center justify-between rounded-xl px-3 py-2.5 border ${f.cor}`}>
+              <div>
+                <p className="text-xs font-semibold">{f.label}</p>
+                <p className="text-xs opacity-70">{f.pct} do valor recebido</p>
+              </div>
+              <p className="text-sm font-bold">{formatMoeda(f.valor)}</p>
+            </div>
+          ))}
+        </div>
+        <div className="px-4 pb-5 pt-2">
+          <button
+            onClick={onClose}
+            className="w-full bg-[#2D2D2D] hover:bg-[#3A3A3A] text-white py-2.5 rounded-xl text-sm font-semibold"
+          >
+            Entendido
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function ModalDetalhePedido({ pedido: p, onClose }: Props) {
   const { atualizarPedido, atualizarStatusPedido, adicionarPagamento, pagamentos } = useDataStore()
   const [editando, setEditando] = useState(false)
   const [statusMenu, setStatusMenu] = useState(false)
+  const [distribuicao, setDistribuicao] = useState<Distribuicao | null>(null)
 
   const [form, setForm] = useState({
     descricaoProduto: p.descricaoProduto,
@@ -208,6 +256,7 @@ export function ModalDetalhePedido({ pedido: p, onClose }: Props) {
       dataPagamento: new Date(),
       confirmado: true,
     })
+    setDistribuicao({ valor, tipo })
   }
 
   function enviarWhatsApp() {
@@ -226,6 +275,10 @@ export function ModalDetalhePedido({ pedido: p, onClose }: Props) {
   }
 
   return (
+    <>
+    {distribuicao && (
+      <ModalDistribuicao dist={distribuicao} onClose={() => setDistribuicao(null)} />
+    )}
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl max-h-[92vh] flex flex-col">
 
@@ -612,5 +665,6 @@ export function ModalDetalhePedido({ pedido: p, onClose }: Props) {
         </div>
       </div>
     </div>
+    </>
   )
 }
