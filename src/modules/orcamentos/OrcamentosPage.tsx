@@ -95,7 +95,7 @@ export function OrcamentosPage() {
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
             <CheckCircle size={15} className="text-green-600" />

@@ -67,12 +67,12 @@ export function EstoquePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Estoque de Materiais</h1>
           <p className="text-gray-500 text-sm mt-1">{estoque.length} itens · {semEstoque.length} sem estoque · {precisamCompra.length} para comprar</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {precisamCompra.length > 0 && (
             <button
               onClick={gerarListaCompras}
@@ -180,9 +180,9 @@ export function EstoquePage() {
         </div>
       )}
 
-      {/* Tabela */}
+      {/* Tabela — desktop */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-5 py-3 border-b bg-gray-50">
+        <div className="hidden md:block px-5 py-3 border-b bg-gray-50">
           <div className="grid grid-cols-8 text-xs font-semibold text-gray-500 uppercase tracking-wide">
             <span className="col-span-2">Material / Produto</span>
             <span>Tecido</span>
@@ -193,23 +193,25 @@ export function EstoquePage() {
             <span>Ações</span>
           </div>
         </div>
-        <div className="divide-y divide-gray-50">
+        <div className="divide-y divide-gray-100">
           {estoque.map(item => {
             const badge = badgeEstoque(item.metragem)
             const editando = editandoId === item.id
 
             if (editando && editForm) {
               return (
-                <div key={item.id} className="px-5 py-3 bg-blue-50/40">
-                  <div className="grid grid-cols-6 gap-2 items-center mb-2">
+                <div key={item.id} className="p-4 bg-blue-50/40 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <input value={editForm.tecido ?? ''} onChange={e => setEditForm(f => f ? { ...f, tecido: e.target.value } : f)}
-                      placeholder="Tecido" className="border rounded px-2 py-1 text-sm" />
+                      placeholder="Tecido" className="border rounded px-2 py-1.5 text-sm" />
                     <input value={editForm.cor ?? ''} onChange={e => setEditForm(f => f ? { ...f, cor: e.target.value } : f)}
-                      placeholder="Cor" className="border rounded px-2 py-1 text-sm" />
+                      placeholder="Cor" className="border rounded px-2 py-1.5 text-sm" />
                     <input value={editForm.largura} type="number" onChange={e => setEditForm(f => f ? { ...f, largura: Number(e.target.value) } : f)}
-                      placeholder="Largura" className="border rounded px-2 py-1 text-sm" />
+                      placeholder="Largura (cm)" className="border rounded px-2 py-1.5 text-sm" />
                     <input value={editForm.metragem} type="number" step="0.1" onChange={e => setEditForm(f => f ? { ...f, metragem: Number(e.target.value) } : f)}
-                      placeholder="Metragem" className="border rounded px-2 py-1 text-sm" />
+                      placeholder="Metragem (m²)" className="border rounded px-2 py-1.5 text-sm" />
+                  </div>
+                  <div className="flex gap-2">
                     <button onClick={salvarEdicao}
                       className="flex items-center gap-1 bg-green-600 text-white px-3 py-1.5 rounded text-xs font-medium">
                       <Save size={12} /> Salvar
@@ -224,33 +226,62 @@ export function EstoquePage() {
             }
 
             return (
-              <div key={item.id} className={cn('px-5 py-3 grid grid-cols-8 gap-2 items-center text-sm hover:bg-gray-50 transition-colors', item.metragem <= 0.5 && 'bg-red-50/30')}>
-                <div className="col-span-2">
-                  <p className="font-medium text-gray-800">{item.tipoMaterial}</p>
-                  {item.tipoProduto && <p className="text-xs text-gray-400">{nomeProduto(item.tipoProduto)}</p>}
-                  {item.observacoes && <p className="text-xs text-amber-600 italic">{item.observacoes}</p>}
+              <div key={item.id} className={cn(item.metragem <= 0.5 && 'bg-red-50/30')}>
+                {/* Mobile: card */}
+                <div className="md:hidden px-4 py-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-medium text-sm text-gray-800">{item.tecido ?? item.tipoMaterial}</p>
+                      {item.cor && <span className="text-xs text-gray-500">{item.cor}</span>}
+                      {item.tipoProduto && <span className="text-xs text-gray-400">· {nomeProduto(item.tipoProduto)}</span>}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className={cn('flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium', badge.cor)}>
+                        {badge.icon}{badge.label}
+                      </span>
+                      <span className={cn('text-xs font-semibold', item.metragem <= 0.5 ? 'text-red-600' : item.metragem <= 2 ? 'text-yellow-600' : 'text-gray-600')}>
+                        {item.metragem}m²
+                      </span>
+                      <span className="text-xs text-gray-400">{item.largura}cm larg.</span>
+                    </div>
+                    {item.observacoes && <p className="text-xs text-amber-600 italic mt-0.5">{item.observacoes}</p>}
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <button onClick={() => iniciarEdicao(item)} className="p-2 hover:bg-gray-100 rounded text-gray-400 hover:text-blue-600">
+                      <Edit2 size={14} />
+                    </button>
+                    <button onClick={() => removerItemEstoque(item.id)} className="p-2 hover:bg-red-50 rounded text-gray-400 hover:text-red-600">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
-                <p className="text-gray-700">{item.tecido ?? '—'}</p>
-                <p className="text-gray-700">{item.cor ?? '—'}</p>
-                <p className="text-gray-600">{item.largura}cm</p>
-                <p className={cn('font-semibold', item.metragem <= 0.5 ? 'text-red-600' : item.metragem <= 2 ? 'text-yellow-600' : 'text-gray-700')}>
-                  {item.metragem}m²
-                </p>
-                <div className="flex items-center gap-1">
-                  <span className={cn('flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium', badge.cor)}>
-                    {badge.icon}
-                    {badge.label}
-                  </span>
-                </div>
-                <div className="flex gap-1">
-                  <button onClick={() => iniciarEdicao(item)}
-                    className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-blue-600 transition-colors">
-                    <Edit2 size={13} />
-                  </button>
-                  <button onClick={() => removerItemEstoque(item.id)}
-                    className="p-1.5 hover:bg-red-50 rounded text-gray-400 hover:text-red-600 transition-colors">
-                    <Trash2 size={13} />
-                  </button>
+
+                {/* Desktop: tabela */}
+                <div className={cn('hidden md:grid px-5 py-3 grid-cols-8 gap-2 items-center text-sm hover:bg-gray-50 transition-colors')}>
+                  <div className="col-span-2">
+                    <p className="font-medium text-gray-800">{item.tipoMaterial}</p>
+                    {item.tipoProduto && <p className="text-xs text-gray-400">{nomeProduto(item.tipoProduto)}</p>}
+                    {item.observacoes && <p className="text-xs text-amber-600 italic">{item.observacoes}</p>}
+                  </div>
+                  <p className="text-gray-700">{item.tecido ?? '—'}</p>
+                  <p className="text-gray-700">{item.cor ?? '—'}</p>
+                  <p className="text-gray-600">{item.largura}cm</p>
+                  <p className={cn('font-semibold', item.metragem <= 0.5 ? 'text-red-600' : item.metragem <= 2 ? 'text-yellow-600' : 'text-gray-700')}>
+                    {item.metragem}m²
+                  </p>
+                  <div>
+                    <span className={cn('flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium w-fit', badge.cor)}>
+                      {badge.icon}{badge.label}
+                    </span>
+                  </div>
+                  <div className="flex gap-1">
+                    <button onClick={() => iniciarEdicao(item)} className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-blue-600 transition-colors">
+                      <Edit2 size={13} />
+                    </button>
+                    <button onClick={() => removerItemEstoque(item.id)} className="p-1.5 hover:bg-red-50 rounded text-gray-400 hover:text-red-600 transition-colors">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 </div>
               </div>
             )
