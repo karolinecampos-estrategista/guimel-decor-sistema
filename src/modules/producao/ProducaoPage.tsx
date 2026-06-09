@@ -16,7 +16,7 @@ const colunas: { status: StatusOrdemProducao; label: string; emoji: string; cor:
 function CardOrdem({ ordem, onAtualizar, sinalConfirmado }: {
   ordem: OrdemProducao
   onAtualizar: (id: string, status: StatusOrdemProducao) => void
-  sinalConfirmado: boolean
+  sinalConfirmado: boolean // exibido como aviso, não bloqueia
 }) {
   const diasRestantes = Math.ceil((new Date(ordem.prazoProducao).getTime() - hoje.getTime()) / 86400000)
   const atrasado = diasRestantes < 0 && !['pronto', 'retirado'].includes(ordem.status)
@@ -36,7 +36,7 @@ function CardOrdem({ ordem, onAtualizar, sinalConfirmado }: {
     retirado: '',
   }
 
-  const bloqueadoPorPagamento = ordem.status === 'pendente' && !sinalConfirmado
+  const semSinalConfirmado = ordem.status === 'pendente' && !sinalConfirmado
 
   return (
     <div className={cn('bg-white rounded-xl p-4 shadow-sm border transition-all',
@@ -54,10 +54,10 @@ function CardOrdem({ ordem, onAtualizar, sinalConfirmado }: {
           Prazo em {diasRestantes} dia{diasRestantes !== 1 ? 's' : ''}
         </div>
       )}
-      {bloqueadoPorPagamento && (
-        <div className="flex items-center gap-1 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-2 py-1 mb-2">
+      {semSinalConfirmado && (
+        <div className="flex items-center gap-1 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1 mb-2">
           <ShieldAlert size={11} />
-          Sinal não confirmado — aguardando pagamento
+          Sinal ainda não confirmado
         </div>
       )}
 
@@ -83,16 +83,10 @@ function CardOrdem({ ordem, onAtualizar, sinalConfirmado }: {
 
       {proximoStatus[ordem.status] && (
         <button
-          disabled={bloqueadoPorPagamento}
-          onClick={() => !bloqueadoPorPagamento && onAtualizar(ordem.id, proximoStatus[ordem.status]!)}
-          className={cn(
-            'mt-3 w-full text-xs py-2 rounded-lg font-medium transition-colors',
-            bloqueadoPorPagamento
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : 'bg-[#2D2D2D] hover:bg-[#3A3A3A] text-white'
-          )}
+          onClick={() => onAtualizar(ordem.id, proximoStatus[ordem.status]!)}
+          className="mt-3 w-full text-xs bg-[#2D2D2D] hover:bg-[#3A3A3A] text-white py-2 rounded-lg font-medium transition-colors"
         >
-          {bloqueadoPorPagamento ? '🔒 Aguardando sinal' : botaoLabel[ordem.status]}
+          {botaoLabel[ordem.status]}
         </button>
       )}
     </div>
