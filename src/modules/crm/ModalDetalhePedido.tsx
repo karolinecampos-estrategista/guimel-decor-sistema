@@ -501,26 +501,32 @@ export function ModalDetalhePedido({ pedido: p, onClose }: Props) {
               )}
 
               {/* Dados do cliente / NF */}
-              {(p.nomeRazaoSocial || p.cpf || p.cnpj || p.enderecoFiscal) && (
-                <section>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-                    <User size={12} /> Dados do cliente (NF)
+              <section>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                  <User size={12} /> Dados do cliente (NF)
+                </p>
+                <div className="bg-gray-50 rounded-xl px-4 py-1">
+                  {([
+                    ['Nome / Razão Social', p.nomeRazaoSocial],
+                    ['CPF', p.cpf],
+                    ['CNPJ', p.cnpj],
+                    ['Endereço fiscal', p.enderecoFiscal],
+                  ] as [string, string | undefined][]).map(([l, v]) => (
+                    <div key={l} className="flex justify-between py-2 border-b border-gray-100 last:border-0 gap-4">
+                      <span className="text-sm text-gray-500 shrink-0">{l}</span>
+                      {v
+                        ? <span className="text-sm font-medium text-gray-800 text-right">{v}</span>
+                        : <span className="text-sm text-gray-300 italic">Não informado</span>
+                      }
+                    </div>
+                  ))}
+                </div>
+                {!p.nomeRazaoSocial && !p.cpf && !p.cnpj && !p.enderecoFiscal && (
+                  <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mt-2">
+                    Clique em "Editar pedido" para preencher os dados do cliente para a nota fiscal.
                   </p>
-                  <div className="bg-gray-50 rounded-xl px-4 py-1">
-                    {[
-                      ['Nome / Razão Social', p.nomeRazaoSocial],
-                      ['CPF', p.cpf],
-                      ['CNPJ', p.cnpj],
-                      ['Endereço fiscal', p.enderecoFiscal],
-                    ].filter(([, v]) => v).map(([l, v]) => (
-                      <div key={l as string} className="flex justify-between py-2 border-b border-gray-100 last:border-0 gap-4">
-                        <span className="text-sm text-gray-500 shrink-0">{l}</span>
-                        <span className="text-sm font-medium text-gray-800 text-right">{v}</span>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
+                )}
+              </section>
 
               {/* Observações */}
               {p.observacoes && (
