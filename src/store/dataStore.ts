@@ -5,12 +5,15 @@ import type {
   StatusLead, StatusOrcamento, StatusPedido, StatusOrdemProducao
 } from '@/types'
 import {
-  mockLeads, mockOrcamentos, mockPedidos, mockOrdens,
+  mockOrcamentos, mockPedidos, mockOrdens,
   mockEstoque, mockIntalacoes, mockContasPagar, mockPagamentos
 } from '@/lib/mockData'
+import { supabase } from '@/lib/supabase'
+import { rowToLead } from '@/lib/leadMapper'
 
 interface DataState {
   // Dados
+  leadsCarregados: boolean
   leads: Lead[]
   orcamentos: Orcamento[]
   pedidos: Pedido[]
@@ -21,8 +24,11 @@ interface DataState {
   pagamentos: Pagamento[]
 
   // Leads
+  carregarLeads: () => Promise<void>
+  setLeads: (leads: Lead[]) => void
   adicionarLead: (lead: Lead) => void
   atualizarStatusLead: (id: string, status: StatusLead) => void
+  atualizarStatusLeadRemoto: (id: string, status: StatusLead) => Promise<void>
   atualizarLead: (lead: Lead) => void
 
   // Orçamentos
@@ -54,8 +60,9 @@ interface DataState {
   adicionarPagamento: (pag: Pagamento) => void
 }
 
-export const useDataStore = create<DataState>((set) => ({
-  leads: mockLeads,
+export const useDataStore = create<DataState>((set, get) => ({
+  leadsCarregados: false,
+  leads: [],
   orcamentos: mockOrcamentos,
   pedidos: mockPedidos,
   ordens: mockOrdens,
@@ -64,11 +71,28 @@ export const useDataStore = create<DataState>((set) => ({
   contasPagar: mockContasPagar,
   pagamentos: mockPagamentos,
 
+  carregarLeads: async () => {
+    const { data, error } = await supabase
+      .from('leads')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (!error && data) {
+      set({ leads: data.map(rowToLead), leadsCarregados: true })
+    }
+  },
+
+  setLeads: (leads) => set({ leads, leadsCarregados: true }),
+
   adicionarLead: (lead) =>
     set(s => ({ leads: [lead, ...s.leads] })),
 
   atualizarStatusLead: (id, status) =>
     set(s => ({ leads: s.leads.map(l => l.id === id ? { ...l, status } : l) })),
+
+  atualizarStatusLeadRemoto: async (id, status) => {
+    set(s => ({ leads: s.leads.map(l => l.id === id ? { ...l, status } : l) }))
+    await supabase.from('leads').update({ status }).eq('id', id)
+  },
 
   atualizarLead: (lead) =>
     set(s => ({ leads: s.leads.map(l => l.id === lead.id ? lead : l) })),

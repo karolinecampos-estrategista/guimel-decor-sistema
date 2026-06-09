@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Layout } from '@/components/layout/Layout'
 import { Login } from '@/pages/Login'
@@ -11,8 +12,32 @@ import { FinanceiroPage } from '@/modules/financeiro/FinanceiroPage'
 import { AnunciosPage } from '@/modules/anuncios/AnunciosPage'
 import { OrcamentosPage } from '@/modules/orcamentos/OrcamentosPage'
 import { ConfiguracoesPage } from '@/modules/configuracoes/ConfiguracoesPage'
+import { useDataStore } from '@/store/dataStore'
+import { supabase } from '@/lib/supabase'
+import { rowToLead } from '@/lib/leadMapper'
+import type { LeadRow } from '@/lib/supabase'
 
 function App() {
+  const { carregarLeads, adicionarLead, atualizarStatusLead } = useDataStore()
+
+  useEffect(() => {
+    carregarLeads()
+
+    // Realtime: novo lead chega e aparece automaticamente no CRM
+    const channel = supabase
+      .channel('leads-realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'leads' }, (payload) => {
+        adicionarLead(rowToLead(payload.new as LeadRow))
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'leads' }, (payload) => {
+        const lead = rowToLead(payload.new as LeadRow)
+        atualizarStatusLead(lead.id, lead.status)
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [])
+
   return (
     <BrowserRouter>
       <Routes>

@@ -84,7 +84,7 @@ function CardLead({ lead, qtdOrcamentos, onClick }: { lead: Lead; qtdOrcamentos:
 }
 
 export function CRMPage() {
-  const { leads, orcamentos, adicionarLead, atualizarStatusLead, adicionarOrcamento, atualizarStatusOrcamento } = useDataStore()
+  const { leads, orcamentos, leadsCarregados, adicionarLead, atualizarStatusLeadRemoto, adicionarOrcamento, atualizarStatusOrcamento } = useDataStore()
   const [leadSelecionado, setLeadSelecionado] = useState<Lead | null>(null)
   const [novoLeadOpen, setNovoLeadOpen] = useState(false)
 
@@ -101,7 +101,7 @@ export function CRMPage() {
   const taxaAbandono = totalLeads > 0 ? (((naoRespondem + soChamou + perdidos) / totalLeads) * 100).toFixed(1) : '0'
 
   function moverLead(leadId: string, novoStatus: StatusLead) {
-    atualizarStatusLead(leadId, novoStatus)
+    atualizarStatusLeadRemoto(leadId, novoStatus)
     if (leadSelecionado?.id === leadId) {
       setLeadSelecionado(prev => prev ? { ...prev, status: novoStatus } : null)
     }
@@ -122,6 +122,17 @@ export function CRMPage() {
 
   function orcamentosDoLead(leadId: string) {
     return orcamentos.filter(o => o.leadId === leadId)
+  }
+
+  if (!leadsCarregados) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-800 mx-auto mb-3" />
+          <p className="text-gray-500 text-sm">Carregando leads...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
