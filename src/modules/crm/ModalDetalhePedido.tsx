@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { Pedido, StatusPedido, Pagamento } from '@/types'
 import {
   X, Edit2, Printer, Download, MessageCircle, CheckCircle,
-  Phone, MapPin, Calendar, CreditCard, Save, ChevronDown
+  Phone, MapPin, Calendar, CreditCard, Save, ChevronDown, User
 } from 'lucide-react'
 import { cn, formatMoeda, formatData, labelStatusPedido, corStatusPedido, nomeProduto } from '@/lib/utils'
 import { useDataStore } from '@/store/dataStore'
@@ -51,6 +51,14 @@ function gerarHTMLPedido(p: Pedido): string {
   ${p.dataPrevistanInstalacao ? `<div class="field"><label>Data de Instalação</label><span>${formatData(new Date(p.dataPrevistanInstalacao))}</span></div>` : ''}
   ${p.enderecoInstalacao ? `<div class="field"><label>Endereço</label><span>${p.enderecoInstalacao}${p.cidade ? ', ' + p.cidade : ''}</span></div>` : ''}
 </div>
+${(p.nomeRazaoSocial || p.cpf || p.cnpj || p.enderecoFiscal) ? `
+<h2>Dados do Cliente</h2>
+<div class="grid">
+  ${p.nomeRazaoSocial ? `<div class="field"><label>Nome / Razão Social</label><span>${p.nomeRazaoSocial}</span></div>` : ''}
+  ${p.cpf ? `<div class="field"><label>CPF</label><span>${p.cpf}</span></div>` : ''}
+  ${p.cnpj ? `<div class="field"><label>CNPJ</label><span>${p.cnpj}</span></div>` : ''}
+  ${p.enderecoFiscal ? `<div class="field" style="grid-column:span 2"><label>Endereço</label><span>${p.enderecoFiscal}</span></div>` : ''}
+</div>` : ''}
 <h2>Pagamento</h2>
 <div class="total">
   <div class="total-row"><span>Valor total</span><span>${formatMoeda(p.valorTotal)}</span></div>
@@ -150,6 +158,10 @@ export function ModalDetalhePedido({ pedido: p, onClose }: Props) {
     enderecoInstalacao: p.enderecoInstalacao ?? '',
     cidade: p.cidade ?? '',
     observacoes: p.observacoes ?? '',
+    nomeRazaoSocial: p.nomeRazaoSocial ?? '',
+    cpf: p.cpf ?? '',
+    cnpj: p.cnpj ?? '',
+    enderecoFiscal: p.enderecoFiscal ?? '',
   })
 
   const pagamentosDoPedido = pagamentos.filter(pg => pg.pedidoId === p.id)
@@ -175,6 +187,10 @@ export function ModalDetalhePedido({ pedido: p, onClose }: Props) {
       enderecoInstalacao: form.enderecoInstalacao || undefined,
       cidade: form.cidade || undefined,
       observacoes: form.observacoes || undefined,
+      nomeRazaoSocial: form.nomeRazaoSocial || undefined,
+      cpf: form.cpf || undefined,
+      cnpj: form.cnpj || undefined,
+      enderecoFiscal: form.enderecoFiscal || undefined,
       atualizadoEm: new Date(),
     })
     setEditando(false)
@@ -347,6 +363,44 @@ export function ModalDetalhePedido({ pedido: p, onClose }: Props) {
                   onChange={e => setForm(f => ({ ...f, cidade: e.target.value }))}
                   className="w-full border rounded-lg px-3 py-2 text-sm" />
               </div>
+
+              {/* Separador dados fiscais */}
+              <div className="pt-1">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                  <User size={12} /> Dados do cliente (NF / Nota)
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <label className="text-xs text-gray-500 mb-1 block">Nome completo ou razão social</label>
+                    <input value={form.nomeRazaoSocial}
+                      onChange={e => setForm(f => ({ ...f, nomeRazaoSocial: e.target.value }))}
+                      placeholder="Como consta no documento"
+                      className="w-full border rounded-lg px-3 py-2 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">CPF</label>
+                    <input value={form.cpf}
+                      onChange={e => setForm(f => ({ ...f, cpf: e.target.value }))}
+                      placeholder="000.000.000-00"
+                      className="w-full border rounded-lg px-3 py-2 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">CNPJ</label>
+                    <input value={form.cnpj}
+                      onChange={e => setForm(f => ({ ...f, cnpj: e.target.value }))}
+                      placeholder="00.000.000/0000-00"
+                      className="w-full border rounded-lg px-3 py-2 text-sm" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs text-gray-500 mb-1 block">Endereço completo (rua, nº, bairro, CEP, cidade)</label>
+                    <input value={form.enderecoFiscal}
+                      onChange={e => setForm(f => ({ ...f, enderecoFiscal: e.target.value }))}
+                      placeholder="Rua das Flores, 123 — Jd. Primavera — 01234-567 — São Paulo/SP"
+                      className="w-full border rounded-lg px-3 py-2 text-sm" />
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Observações</label>
                 <textarea value={form.observacoes}
@@ -442,6 +496,28 @@ export function ModalDetalhePedido({ pedido: p, onClose }: Props) {
                         </span>
                       </div>
                     )}
+                  </div>
+                </section>
+              )}
+
+              {/* Dados do cliente / NF */}
+              {(p.nomeRazaoSocial || p.cpf || p.cnpj || p.enderecoFiscal) && (
+                <section>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                    <User size={12} /> Dados do cliente (NF)
+                  </p>
+                  <div className="bg-gray-50 rounded-xl px-4 py-1">
+                    {[
+                      ['Nome / Razão Social', p.nomeRazaoSocial],
+                      ['CPF', p.cpf],
+                      ['CNPJ', p.cnpj],
+                      ['Endereço fiscal', p.enderecoFiscal],
+                    ].filter(([, v]) => v).map(([l, v]) => (
+                      <div key={l as string} className="flex justify-between py-2 border-b border-gray-100 last:border-0 gap-4">
+                        <span className="text-sm text-gray-500 shrink-0">{l}</span>
+                        <span className="text-sm font-medium text-gray-800 text-right">{v}</span>
+                      </div>
+                    ))}
                   </div>
                 </section>
               )}

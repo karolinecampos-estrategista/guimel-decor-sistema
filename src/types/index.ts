@@ -106,6 +106,11 @@ export interface Pedido {
   observacoes?: string
   criadoEm: Date
   atualizadoEm: Date
+  // Dados fiscais do cliente
+  nomeRazaoSocial?: string
+  cpf?: string
+  cnpj?: string
+  enderecoFiscal?: string
 }
 
 export type StatusOrdemProducao = 'pendente' | 'em_andamento' | 'pronto' | 'retirado'
