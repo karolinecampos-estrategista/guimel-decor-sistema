@@ -1,20 +1,41 @@
+import { useState } from 'react'
 import { Outlet, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { Sidebar } from './Sidebar'
-import { Bell } from 'lucide-react'
+import { Bell, Menu } from 'lucide-react'
 
 export function Layout() {
   const { usuario } = useAuthStore()
+  const [sidebarAberta, setSidebarAberta] = useState(false)
 
   if (!usuario) return <Navigate to="/login" replace />
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#F8F6F2]">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Overlay escuro no mobile quando menu aberto */}
+      {sidebarAberta && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 md:hidden"
+          onClick={() => setSidebarAberta(false)}
+        />
+      )}
+
+      <Sidebar aberta={sidebarAberta} onFechar={() => setSidebarAberta(false)} />
+
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Header */}
-        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0">
-          <div />
+        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 shrink-0">
+          {/* Botão hamburguer — só mobile */}
+          <button
+            onClick={() => setSidebarAberta(true)}
+            className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <Menu size={20} className="text-gray-600" />
+          </button>
+
+          {/* Espaço vazio no desktop (logo já está na sidebar) */}
+          <div className="hidden md:block" />
+
           <div className="flex items-center gap-3">
             <button className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors">
               <Bell size={18} className="text-gray-500" />
@@ -27,7 +48,7 @@ export function Layout() {
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
           <Outlet />
         </main>
       </div>
